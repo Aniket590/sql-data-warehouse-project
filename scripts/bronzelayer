@@ -1,0 +1,123 @@
+/* 
+=======================================================
+Create Database and Load Data 
+=======================================================
+Script Purpose:
+   This Script create a new database named 'Warehouse'.
+   And after that we create tables in database and load the data in the tables.
+   Make sure the date is loaded successfully.
+
+   /*
+   
+
+
+
+create database warehouse;
+
+use warehouse;
+
+create table crm_cust_info(
+cst_id int,
+cst_key varchar(50),
+cst_firstname varchar(50),
+cst_lastname varchar(50),
+cst_marital_status varchar(50),
+cst_gndr varchar(50),
+cst_create_date date);
+
+create table crm_prd_info(
+prd_id int,
+prd_key varchar(255),
+prd_nm varchar(255),
+prd_cost int,
+prd_line varchar(255),
+prd_start_dt date,
+prd_end_dt date);
+
+create table crm_sales_detail(
+sls_ord_num varchar(255),
+sls_prd_key varchar(255),
+sls_cust_id int,
+sls_order_dt int,
+sls_ship_dt int, 
+sls_due_dt int,
+sls_sales int, 
+sls_quantity int, 
+sls_price int );
+
+drop table cust_az12;
+create table erp_cust_az12(
+CID varchar(50),
+BDATE date,
+GEN varchar(50));
+
+drop table loc_a101;
+create table erp_loc_a101( 
+CID varchar(50),
+CNTRY varchar(100));
+
+drop table px_cat_g1v2;
+create table erp_px_cat_g1v2(
+ID varchar(100),
+CAT varchar(100),
+SUBCAT varchar(100),
+MAINTENANCE varchar(100));
+
+
+
+
+load data local infile
+'C:/data_files/Excel_File/sql-data-warehouse-project/datasets/source_crm/cust_info.csv'
+into table crm_cust_info
+fields terminated by ','
+enclosed by '"'
+lines terminated by '\r\n'
+ignore 1 rows;
+
+
+load data local infile
+'C:/data_files/Excel_File/sql-data-warehouse-project/datasets/source_crm/prd_info.csv'
+into table crm_prd_info
+fields terminated by ','
+enclosed by '"'
+lines terminated by '\r\n'
+ignore 1 rows;
+
+load data local infile
+'C:/data_files/Excel_File/sql-data-warehouse-project/datasets/source_crm/sales_details.csv'
+into table crm_sales_detail
+fields terminated by ','
+enclosed by '"'
+lines terminated by '\r\n'
+ignore 1 rows;
+
+load data local infile
+'C:/data_files/Excel_File/sql-data-warehouse-project/datasets/source_erp/CUST_AZ12.csv'
+into table erp_cust_az12
+fields terminated by ','
+enclosed by '"'
+lines terminated by '\r\n'
+ignore 1 rows;
+
+load data local infile
+'C:/data_files/Excel_File/sql-data-warehouse-project/datasets/source_erp/loc_a101.csv'
+into table erp_loc_a101
+fields terminated by ','
+enclosed by '"'
+lines terminated by '\r\n'
+ignore 1 rows;
+
+load data local infile
+'C:/data_files/Excel_File/sql-data-warehouse-project/datasets/source_erp/px_cat_g1v2.csv'
+into table erp_px_cat_g1v2
+fields terminated by ','
+enclosed by '"'
+lines terminated by '\r\n'
+ignore 1 rows;
+
+
+select * from crm_prd_info;
+select * from crm_sales_detail;
+select * from erp_loc_a101;
+select * from erp_px_cat_g1v2;
+select * from erp_cust_az12;
