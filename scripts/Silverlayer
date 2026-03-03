@@ -38,7 +38,6 @@ from crm_cust_info
 
 ============= Preparing Second Table ====================
 
-#--------- Loading the data into Silver_prd_info ----------#
 
 insert into silver_prd_info(
 prd_id ,
