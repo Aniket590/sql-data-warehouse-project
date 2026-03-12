@@ -1,1 +1,55 @@
+create view gold_dim_customers as
+select 
+row_number() over(order by cst_id) as Customer_Key,
+t1.cst_id as Customer_id,
+t1.cst_key As customer_number,
+t1.cst_firstname As First_name,
+t3.cntry as Country,
+case when t1.cst_gndr != 'n/a' then t1.cst_gndr
+else coalesce(t2.gen , 'n/a')
+end as Gender,
+t1.cst_marital_status as Marital_status,
+t2.bdate as Birth_day,
+t1.cst_create_date as Create_date
+from silver_cust_info t1
+left join silver_cust_az12 t2
+on t1.cst_key = t2.CID
+left join silver_loc_a101 t3
+on t1.cst_key = t3.cid;
 
+
+create view gold_dim_product as
+select 
+	row_number() over(order by prd_id) as Product_key,
+	t1.prd_id as product_ID,
+	t1.prd_key as Product_number,
+	t1.prd_nm as product_name ,
+    t1.cat_id AS Category_id,
+	t2.cat as Catogery,
+	t2.SUBCAT as SubCategory,
+	t1.prd_cost as Product_cost,
+	t2.MAINTENANCE,
+	t1.prd_line as Product_line,
+	t1.prd_start_dt as Start_date
+from silver_prd_info t1
+left join silver_px_cat_g1v2 t2
+on t1.Cat_ID = t2.id
+where prd_end_dt is null;
+
+
+create view gold_fact_sales as
+select 
+t1.sls_ord_num as order_number,
+t2.product_key,
+t3.customer_key,
+t1.sls_order_dt as order_date,
+t1.sls_ship_dt as ShippingDate,
+t1.sls_due_dt as Due_date,
+t1.sls_sales as Sales_amount,
+t1.sls_quantity as Quantity,
+t1.sls_price as price
+from silver_sales_detail t1
+left join gold_dim_product t2
+on t1.sls_prd_key = t2.product_number
+left join gold_dim_customers t3
+on t1.sls_cust_id = t3.Customer_id;
