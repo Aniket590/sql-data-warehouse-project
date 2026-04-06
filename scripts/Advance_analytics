@@ -1,1 +1,91 @@
+# tracking the sales over the years
 
+select year(order_date) as years , 
+sum(sales_amount) as total_sales from sales_info
+where order_date is not null
+group by year(order_date)
+order by year(order_date);
+
+# tracking the sales over the months
+
+select year(order_date) as years,
+monthname(order_date) as Month_name,
+month(order_date) as month_no , 
+sum(sales_amount) as total_sales,
+sum(quantity) as order_quantity from sales_info
+where order_date is not null
+group by year(order_date),monthname(order_date),month(order_date)
+order by year(order_date), month(order_date);
+
+select * from sales_info;
+
+# tacking the sales over the weeks in a year
+
+select year(order_date) as years,
+weekofyear(order_date) as week_no, 
+sum(sales_amount) as total_sales,
+sum(quantity) as order_quantity from sales_info
+where order_date is not null
+group by year(order_date),weekofyear(order_date)
+order by year(order_date),weekofyear(order_date);
+
+# calculate the total sales per months and the running total of sales over time
+
+select years, order_date,total_sales,
+sum(total_sales) over(partition by years order by order_date ) as Runing_total_sales,
+avg(total_sales) over(partition by years order by order_date) as Average_sales
+from(
+select year(order_date) as years,  
+date_format(order_date, '20%y-%m-01') as order_date,
+sum(sales_amount) as total_sales
+from sales_info
+where order_date is not null
+group by years, date_format(order_date, '20%y-%m-01')
+order by  years,date_format(order_date, '20%y-%m-01') ) t
+order by years, order_date ; 
+
+/* -------------------------------------------------------------------
+## Analyze the yearly performance of products by compairing their sales to both  
+##    average sales performance of the product and previous year's sales.         
+---------------------------------------------------------------------------*/
+
+with yearly_product_sales as(
+select 
+year(order_date) as years, product_name,sum(sales_amount) as total_sales from sales_info S
+left join product_info P
+on S.product_key = P.Product_key
+where order_date is not null
+group by year(order_date),product_name)
+select 
+years,
+product_name,
+total_sales,
+avg(total_sales) over(partition by product_name) as Average_sales,
+total_sales - avg(total_sales) over(partition by product_name) as Diff_avg,
+case when total_sales - avg(total_sales) over(partition by product_name) < 0 then 'below average'
+		when total_sales - avg(total_sales) over(partition by product_name) > 0 then 'above average'
+        else 'average' end marks,
+lag(total_sales) over(partition by product_name order by years) as py_year,
+total_sales - lag(total_sales) over(partition by product_name order by years) as diff_py,
+case when total_sales - lag(total_sales) over(partition by product_name order by years) < 0 then 'decrease by'
+		when total_sales - lag(total_sales) over(partition by product_name order by years) > 0 then 'increased by'
+        else 'no change'
+        end Mark_py
+from yearly_product_sales
+order by product_name,years;
+
+# --- how eachn catogery is contributiong to the whole business
+
+with category_sales as(
+select 
+catogery,
+sum(sales_amount) as total_sales from sales_info s
+left join product_info p
+on s.product_key = p.Product_key
+group by Catogery)
+select 
+catogery,
+total_sales,
+sum(total_sales) over() as overall_sales,
+concat(round((total_sales/ sum(total_sales) over())* 100,2),'%') as Percentage_of_total
+from category_sales;
