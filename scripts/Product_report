@@ -1,1 +1,77 @@
+   
+/*
+## Product Report
+===============================================
+Purpose:
+	- This report consolidate key product matrix and behaviors.
+Highlights:
+	1. gather essential fields such as product name, catogery, sub category and cost
+	2. segment products by revenue to identify high, mid, low performers
+    3. aggrigate products level matrix:
+		- total orders
+		- total sales
+		- total quantity sold
+		- total customers(unique)
+		- lifespan( in months)
+	4.calculate valuable KPIs:
+		- recency (months since last sales)
+        - average order revenue
+        - average monthly revenue
+======================================================
+*/
+create view Product_report as
+with base_quary as(                                -- selecting the important column
+select 
+	order_number,
+    customer_key,
+	order_date, 
+	sales_amount, 
+	quantity, 
+	p.product_key, 
+	product_name, 
+	catogery, 
+	subcategory, 
+	product_cost 
+from sales_info s 
+left join product_info p 
+on s.product_key = p.product_key
+where order_date is not null),
+Product_aggrigation as(
+select catogery,                                 -- Aggrigating the columns for better data understanding
+subcategory, 
+product_name,
+product_cost,
+product_key,
+max(order_date) as last_sales_date,
+sum(sales_amount) as total_sales,
+count(distinct order_number) as total_order,
+sum(quantity) as total_quantity,
+count(distinct customer_key) as total_customer,
+timestampdiff(month,min(order_date) , max(order_date)) as lifespan,
+round(avg(cast(sales_amount as float)/ ifnull( quantity,0)),1) as avg_selling_price
+from base_quary
+group by product_key, product_name,catogery, subcategory,product_cost)
+select                                                                                      -- Calculating the valuable KPI's
+	catogery,
+	subcategory, 
+	product_name,
+	product_cost,
+	product_key,
+	last_sales_date,
+	total_sales,
+    case when total_sales > 50000 then 'High Performer'
+		when total_sales between  10000  and 50000 then 'Mid Performer'
+        else 'Low Performers'
+        end Revenue_segment, 
+	total_order,
+	total_quantity,
+	total_customer,
+	lifespan,
+    avg_selling_price,
+    timestampdiff(month,last_sales_date, curdate()) as recency,               -- recency (months since last sales)
+    case when total_order = 0 then total_sales
+    else (total_sales/total_order)
+    end avg_order_revenue,                                                      -- average order revenue
+    round(total_sales/lifespan,2) as avg_monthly_revenue                        -- average monthly revenue
+from product_aggrigation  ;  
 
