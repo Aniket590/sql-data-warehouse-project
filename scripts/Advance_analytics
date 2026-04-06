@@ -89,3 +89,36 @@ total_sales,
 sum(total_sales) over() as overall_sales,
 concat(round((total_sales/ sum(total_sales) over())* 100,2),'%') as Percentage_of_total
 from category_sales;
+
+ 
+/* group customers into three segments based on their spending behavior:
+  - VIP : customer at least 12 month of history and spending more than $5000.
+  - Regular : customer at least 12 month of history but spending $5000 or less
+  - New : Customer with a lifespan less than 12 months.
+And find total no of customer in each group
+*/
+
+
+with customer_segment as(
+select 
+c.customer_key,
+sum(Sales_amount) as total_sales,
+min(order_date) as first_order,
+max(order_date) as Last_order,
+period_diff(extract(year_month from max(order_date)) , extract(year_month from min(order_date))) as life_span,
+timestampdiff(month,min(order_date) , max(order_date)) as life_span_months
+ from sales_info s
+left join customer_info c
+on s.customer_key = c.customer_key
+group by c.customer_key)
+
+select customer_ranking, count(customer_key) as total_customer,
+sum(total_sales) as total_revenue
+from(
+select customer_key, total_sales, life_span,
+case when life_span > 12 and total_sales > 5000 then 'VIP_customer'
+		when life_span > 12 and total_sales <= 5000 then 'Regular_customer'
+        else "New customer"
+        end Customer_ranking
+from customer_segment) t
+group by customer_ranking;
